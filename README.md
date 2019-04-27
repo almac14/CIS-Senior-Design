@@ -3,12 +3,12 @@ Automated Server Health Check
 
 UMass Dartmouth CIS Senior Design Project #6 
 
-Documentation index
+Documentation Index
 -------------------
 
 
 
-Team members
+Team Members
 ------------
 
 Team Leader:
@@ -33,4 +33,7 @@ Windows PowerShell ISE:
 
 Eclipse:
 - **Specifically for the Admin tool GUI**
+
+HTML/CSS/JS:
+- **These were used in order to create the webpage application, to display the short view and full view of the gathered data and any problems with the servers highlighted in red**
 
