@@ -29,8 +29,8 @@ Enviorments Used
 ------------
 
 Windows PowerShell ISE: 
--**Used specifically for the data gathering scripts**
+- **Used specifically for the data gathering scripts**
 
 Eclipse:
--**Specifically for the Admin tool GUI**
+- **Specifically for the Admin tool GUI**
 
