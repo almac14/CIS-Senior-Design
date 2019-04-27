@@ -1,0 +1,59 @@
+/* creates the red highlited background in the short view and makes the text white*/
+.red-highlight{
+  background-color: red;
+  color: white;
+}
+
+/*underlines the text "why the red-highlight*/
+.underline {
+	text-decoration: underline;
+}
+
+/*set button width*/
+.but {
+	width: 150pt;
+	text-align: left;
+}
+
+
+/* General styles for the body elements and table*/
+
+body { 
+	background-color:white;
+	/*background-color:#ffffff;*/
+	/*Previous background-color:#dddddd"*/
+	
+	font-family:Tahoma, Trebuchet MS;
+	/*Previous font:Tahoma*/
+	font-size:16pt;/*13pt;*/
+}
+
+h1 {
+	font-size:200%;
+}
+
+td, th { 
+	/*border-bottom: 1.5px solid black;*/
+	border:1.5px black;
+	border-style: solid;
+	/*font-size:30pt;
+	/*border-collapse:collapse;*/
+}
+
+th { 
+	color:white;
+	background-color:#002266;
+	/*Previous background-color:black*/
+}
+
+
+table, tr, td, th { 
+	border-collapse: collapse;
+	padding: 2px; 
+	margin: 0px
+}
+
+table { 
+	margin-left:50px;
+}
+

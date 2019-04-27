@@ -1,0 +1,34 @@
+import java.awt.BorderLayout;
+
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
+import java.awt.GridLayout;
+import javax.swing.JProgressBar;
+
+public class RunningPopup extends JDialog {
+
+	public RunningPopup(String message, JFrame owner) {
+		super(owner);
+		setResizable(false);
+		setModal(true);
+		setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+		setBounds(100, 100, 200, 100);
+		getContentPane().setLayout(new GridLayout(2, 1, 0, 0));
+		
+		JLabel lblMessage = new JLabel(message);
+		lblMessage.setFont(MainWindow.primaryFont);
+		lblMessage.setHorizontalAlignment(SwingConstants.CENTER);
+		getContentPane().add(lblMessage);
+		
+		JPanel panel = new JPanel();
+		getContentPane().add(panel);
+		panel.setLayout(new BorderLayout(50, 100));
+		
+		JProgressBar progressBar = new JProgressBar();
+		progressBar.setIndeterminate(true);
+		panel.add(progressBar, BorderLayout.NORTH);
+	}
+}

@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<style type="text/css">
+h3, h4, h4, p, ul { 
+	margin-left: 40px;
+}
+.code {
+	font-family: Lucida Console;
+	font-size: 10pt;
+}
+</style>
+</head>
+
+<body>
+<p></p>
+<h1 style="text-align: center;">Developer Guide</h1>
+
+<table cellpadding="10" align="center">
+<tbody>
+<tr>
+<td><a href="#ProgramOverview">Program Overview</a></td>
+<td><a href="#PowerShell">PowerShell</a></td>
+<td><a href="#HTML_CSS_JavaScript">HTML / CSS / JavaScript</a></td>
+<td><a href="#Java">Java</a></td>
+</tr>
+</tbody>
+</table>
+
+<h1><a id="ProgramOverview"></a>Program Overview</h1>
+<h2>Data Flow</h2>
+<img src="Program Execution Explanation.png" height="700">
+<h2>Program Execution</h2>
+<p>When the tool is executed, it will call the Main.ps1 script to run which will get the list of servers and run the <a href="#DataSheet">DataSheet.ps1</a> script. This script will run the data collection scripts concurrently and return the collected data to the DataSheet script. The DataSheet script will generate a report file which can be viewed in the web page.</p>
+<h2>Data Collection</h2>
+<p>The tool will collect the following information from the given list of servers:</p>
+<ul>
+<li><a href="#VersionData">Application Version</a></li>
+<li><a href="#DriveSpace">Drive Space</a></li>
+<li><a href="#PhysicalMemory">Memory Space</a></li>
+<li><a href="#IPAddresses">IP Address</a></li>
+<li><a href="#OSVersion">OS Version</a></li>
+<li><a href="#DateTime">Date and Time</a></li>
+<li><a href="#Services">Services</a></li>
+</ul>
+
+<h1><a id="PowerShell"></a>PowerShell</h1>
+<h2><a id="Comments"></a>Config.ps1</h2>
+<h4>Description</h4>
+<ul>
+<li>This script defines a table variable called $config with several configuration values. These are the paths to the computer list file, the baseline file, service filter file, reports file, and reports folder. This script is loaded whenever any of these values are used (in DataSheet.ps1, Main.ps1, and DeleteOldReports.ps1). Note: when editing the reports folder path, it also needs to be updated in displayReport.js and AdminTool.java.</li>
+</ul>
+
+<h2><a id="DataSheet"></a>DataSheet.ps1</h2>
+<h4>Description</h4>
+<ul>
+<li>This PowerShell script unites all of the data collection powershell scripts under one umbrella by loading all of the necessary data to memory prior to running and feeding the necessary data to each powershell script background job as necessary. Once the data collection scripts are loaded into memory, the scripts will be started as concurrent background tasks to collect all of the data on separate threads. All of the results of the each script will be stored in a JSON object. The script also includes error-catching functionality if any scripts return null values or have other errors.</li>
+<li>All of the baseline files that were utilized for the filtering will also be included in the JSON object. This data is not be included in the visual reports, however, since all of this information is present in the baselines in the admin tool. The purpose of this data is to provide the administrator with the original baseline file information in the case that the information was changed later.</li>
+<li>The report file name will be created through the parsing of time elements starting with date and ending with the time the program collected all of the necessary data.</li>
+</ul>
+<h4>Parameters</h4>
+<ul>
+<li><strong>ComputerNames</strong>&nbsp;(Optional): A string array that specifies the names of the computers that data will be gathered from.</li>
+<li><strong>Comment</strong>&nbsp;(Optional, default = "none"): A string that specifies the comment that will be added to the report.</li>
+</ul>
+<h4>External Files</h4>
+<ul>
+<li>The following scripts are required for this script to run:</li>
+<li>PowerShell Scripts
+<ul>
+<li>VersionData.ps1</li>
+<li>IPAddress.ps1</li>
+<li>DriveSpace.ps1</li>
+<li>OSVersion.ps1</li>
+<li>PhysicalMemory.ps1</li>
+<li>Services.ps1</li>
+<li>DateTime.ps1</li>
+<li>Comments.ps1</li>
+</ul>
+</li>
+<li>Baseline Files
+<ul>
+<li>baseline.txt</li>
+<li>ServiceFilter.txt</li>
+</ul>
+</li>
+</ul>
+<h4>Outputs</h4>
+<ul>
+<li>A report file with the name of the time and date that the report was generated.</li>
+<li>The filename that was generated for the script that called the DataSheet script.</li>
+</ul>
+<h4>Examples</h4>
+<ul>
+<li>Generate a datasheet from the stats of the host server, "Computer1", and "Computer2" with the default comment.<br /><span class="code">Get-DataSheet -ComputerNames @("Computer1", "Computer2")</span></li>
+</ul>
+<ul>
+<li>Generate a datasheet from the stats of the host server and add a comment<br /><span class="code">Get-DataSheet -Comment "Super official comment"</span></li>
+</ul>
+
+<h2><a id="DateTime"></a>DateTime.ps1</h2>
+<h4>Description</h4>
+<ul>
+<li>This script will collect the time and time zone information about each of the specified computers in the computer list. The script returns an object containing the collected information about the computer&rsquo;s name, time, day of the week, timezone, and unix time.</li>
+</ul>
+<h4>Parameters</h4>
+<ul>
+<li><strong>ComputerNames</strong> (Optional): A string array that specifies the other computers that the script will run on.</li>
+</ul>
+<h4>Outputs</h4>
+<ul>
+<li>A table with ComputerName, DateString, DayOfWeek, Day, Month, Year, Hour, Minute, Second, UnixTime, StandardTimeZone, and DaylightTimeZone.</li>
+</ul>
+<h4>Examples</h4>
+<ul>
+<li>Get the time information of the server.<br /><span class="code">Get-Time</span></li>
+</ul>
+<ul>
+<li>Get the time information of the server and Computer1.<br /><span class="code">Get-Time -ComputerNames @("Computer1")</span></li>
+</ul>
+
+<h2><a id="DeleteOldReports"></a>DeleteOldReports.ps1</h2>
+<h4>Description</h4>
+<ul>
+<li>This script is a utility to delete report files based on their age. It is run every time a new report is generated, and by default it deletes reports older than 7 days. The user may specify individual reports to delete that may not be old enough to delete automatically. If the user specifies any individual reports, no reports will be deleted based on age unless the user also specifies the age. Internally, it deletes the report files and removes them from reports.js.</li>
+</ul>
+<h4>Parameters</h4>
+<ul>
+<li><strong>AgeInDays</strong> (Optional, default=7): The cut off for keeping reports. All reports older than AgeInDays will be deleted. If a value of 0 is given, all reports will be deleted.</li>
+<li><strong>Reports</strong> (Optional): Specific reports to delete.</li>
+<li><strong>Y</strong> (optional): Don't ask for confirmaion for deleting the reports</li>
+</ul>
+<h4>Outputs</h4>
+<ul>
+<li>Text stating the status of the script.</li>
+</ul>
+<h4>Examples</h4>
+<ul>
+<li>Delete all reports older than 7 days:<br /><span class="code">.\DeleteOldReports.ps1</span></li>
+<li>Delete 2 specific reports:<br /><span class="code">.\DeleteOldReports.ps1 -r 20190101T165243,20190103T092006</span></li>
+<li>Delete 1 report and any older than 10 days<br /><span class="code">.\DeleteOldReports.ps1 -a 10 -r 20190102T115015</span></li>
+<li>Delete all reports older than 7 days and don't ask for confirmation<br /><span class="code">.\DeleteOldReports.ps1 -y </span></li>
+</ul>
+
+<h2><a id="DeleteTask"></a>DeleteTask.ps1</h2>
+<h4>Description</h4>
+<ul>
+<li>This script defines the Delete-ScheduledTask command. It is a simple shortcut to deleting a task from the Windows Task Scheduler.</li>
+</ul>
+<h4>Parameters</h4>
+<ul>
+<li><strong>TaskName</strong> (Required): The name of the task to be deleted from the scheduler.</li>
+</ul>
+<h4>Outputs</h4>
+<ul>
+<li>None</li>
+</ul>
+<h4>Example</h4>
+<ul>
+<li>Delete the task named "Server Health Check"<br /><span class="code">Delete-ScheduledTask -TaskName "Server Health Check"</span></li>
+</ul>
+
+<h2><a id="DriveSpace"></a>DriveSpace.ps1</h2>
+<h4>Description</h4>
+<ul>
+<li>This script file defines Get-DriveSpace which gathers information about the hard drives on the local server and the given remote servers. Get-DriveSpace uses System.IO.DriveInfo.GetDrives() internally, and Invoke-Command to get information from the remote servers. If Get-DriveSpace is not run as Administrator, the results will include the user&rsquo;s network drives.</li>
+</ul>
+<h4>Parameters</h4>
+<ul>
+<li><strong>ComputerNames</strong> (Optional): A string array of computer names for the remote servers to get info from.</li>
+</ul>
+<h4>Outputs</h4>
+<ul>
+<li>A table with columns ComputerName, Drive, UsedGB, FreeGB, TotalGB, and PercentFree.</li>
+</ul>
+<h4>Examples</h4>
+<ul>
+<li>Get the drive space of the server.<br /><span class="code">Get-DriveSpace</span></li>
+</ul>
+<ul>
+<li>Get the drive space of the server and Computer1.<br /><span class="code">Get-DriveSpace -ComputerNames @("Computer1")</span></li>
+</ul>
+
+<h2><a id="FindOtherServers"></a>FindOtherServers.ps1</h2>
+<h4>Description</h4>
+<ul>
+<li>This script finds all of the windows servers on the network, and outputs them to a file. The output file will be the server computer names separated by newlines.</li>
+</ul>
+<h4>Parameters</h4>
+<ul>
+<li><strong>OutFile</strong> (Required): The file to output the server computer names to.</li>
+</ul>
+<h4>Outputs</h4>
+<ul>
+<li>A file containing the server computer names separated by newlines.</li>
+</ul>
+
+<h2><a id="IPAddresses"></a>IPAddress.ps1</h2>
+<h4>Description</h4>
+<ul>
+<li>This script defines the Get-IPs command which gets the IP address of the local server and the given remote servers. The command uses Get-NetIPAddress and filters the given IP addresses to only show the ones with a finite lifespan.</li>
+</ul>
+<h4>Parameters</h4>
+<ul>
+<li><strong>ComputerNames</strong> (Optional): A string of computer names for the additional servers.</li>
+</ul>
+<h4>Outputs</h4>
+<ul>
+<li>A table with columns ComputerName and IPAddress.</li>
+</ul>
+<h4>Examples</h4>
+<ul>
+<li>Get the local server's IP address<br /><span class="code">Get-IPs</span></li>
+<li>Get the IP address of the local server and a computer named "Computer1"<br /><span class="code">Get-IPs -ComputerNames @("Computer1")</span></li>
+</ul>
+
+<h2><a id="Main"></a>Main.ps1</h2>
+<h4>Description</h4>
+<ul>
+<li>This script is the script to run to generate a report. It calls Get-DataSheet and adds the new report to reports.js. It takes in the computer names for the remote servers from OtherServers.txt, and passes them to Get-DataSheet. </li>
+</ul>
+<h4>Parameters</h4>
+<ul>
+<li><strong>SkipOpenReports</strong> (Optional): Switch for whether or not to open the report list in the users default web browser (enable to not open).</li>
+<li><strong>Comment</strong> (Optional, default="None"): The comment for the report.</li>
+</ul>
+<h4>Outputs</h4>
+<ul>
+<li>Outputs the generated datasheet from the Get-DataSheet command to a report file.</li>
+</ul>
+<h4>Examples</h4>
+<ul>
+<li>Run the main script with the default comment<br /><span class="code">.\Main.ps1</span></li>
+</ul>
+<ul>
+<li>Run the main script with a new comment<br /><span class="code">.\Main.ps1 -Comment "Fun comment!"</span></li>
+</ul>
+
+<h2><a id="OSVersion"></a>OSVersion.ps1</h2>
+<h4>Description</h4>
+<ul>
+<li>This script defines the Get-OS command which gets the OS information of the local server and the given remote servers. The command uses Get-WmiObject to retrieve the OS-specific information.</li>
+</ul>
+<h4>Parameters</h4>
+<ul>
+<li><strong>ComputerNames</strong> (Optional): A string array of computer names for the additional computers.</li>
+</ul>
+<h4>Outputs</h4>
+<ul>
+<li>A table with columns ComputerName, OSName, OSArchitecture, OSVersion, and OSBuildNumber.</li>
+</ul>
+<h4>Examples</h4>
+<ul>
+<li>Get the local server's OS information<br /><span class="code">Get-OS</span></li>
+<li>Get the OS information of the local server and computers named "Computer1" and "Computer2"<br /><span class="code">Get-OS -ComputerNames @("Computer1", "Computer2")</span></li>
+</ul>
+
+<h2><a id="PhysicalMemory"></a>PhysicalMemory.ps1</h2>
+<h4>Description</h4>
+<ul>
+<li>This script is used to gather the physical memory, or RAM, of the local server and any other servers listed on the baseline text file. It utilizes the Get-Memory function command which will then gather information of the local server and any other servers listed in the baseline text file. The commands uses Get-Ciminstance to gather it's information.</li>
+</ul>
+<h4>Parameters</h4>
+<ul>
+<li><strong>ComputerNames</strong> (Optional): A string array that specifies the other computers that the script will run on.</li>
+</ul>
+<h4>Outputs</h4>
+<ul>
+<li>A table with columns ComputerNames, FreeGB, TotalGB, and PctFree.</li>
+</ul>
+<h4>Examples</h4>
+<ul>
+<li>Get the physical memory of the server<br /><span class="code">Get-Memory</span></li>
+</ul>
+<ul>
+<li>Get the physical memory of the server and Computer1<br /><span class="code">Get-Memory -ComputerNames @("Computer1")</span></li>
+</ul>
+
+<h2><a id="ScheduleTask"></a>ScheduleTask.ps1</h2>
+<h4>Description</h4>
+<ul>
+<li>This script file defines the advanced cmdlet function ScheduleTask which utilizes the Windows Task Scheduler to run the main powershell script daily at a predetermined time. This task will be labeled with a defined name currently called "Server Health Check" and it is set to run at 12:01 daily.</li>
+</ul>
+<h4>Parameters</h4>
+<ul>
+<li>None</li>
+</ul>
+<h4>Outputs</h4>
+<ul>
+<li>Text to the console which describes what the script is doing.</li>
+</ul>
+<h4>Examples</h4>
+<ul>
+<li><span class="code">ScheduleTask.ps1</span></li>
+</ul>
+
+<h2><a id="Services"></a>Services.ps1</h2>
+<h4>Description</h4>
+<ul>
+<li>This script file defines Get-Services which gets the services running on the local server and the given remote servers. It uses Get-WmiObject internally to get the services and Invoke-Command to get the services on the remote servers.</li>
+</ul>
+<h4>Parameters</h4>
+<ul>
+<li><strong>ComputerNames</strong> (Optional): A string array that specifies the other computers that the script will run on.</li>
+</ul>
+<h4>Outputs</h4>
+<ul>
+<li>A table with columns ComputerName, Name, State, StartMode, DisplayName, and Ignore.</li>
+</ul>
+<h4>Examples</h4>
+<ul>
+<li>Get the services of the server<br /><span class="code">Get-Services</span></li>
+</ul>
+<ul>
+<li>Get the services of the server and Computer1<br /><span class="code">Get-Services -ComputerNames @("Computer1")</span></li>
+</ul>
+
+<h2><a id="VersionData"></a>VersionData.ps1</h2>
+<h4>Description</h4>
+<ul>
+<li>VersionData is a method for collecting data about the installed applications on a given computer/server. VersionData works by accessing the system's 32-bit and 64-bit uninstall list and unifying them into a singular list of applications. While the applications are being checked, there is a hard-coded filter that ignores any bloatware that may be installed on the system. These keywords can be changed/modified in the code if you find there are applications coming up that you may not care about seeing any information on. The ignored applications are stored in an array bin and displayed to the console if the -ShowIgnored Parameter is defined as true. The program then checks for a baseline file if it was provided in the -BaseLinePath parameter. The -BaseLinePath is tested for file existence, compatibility, and proper formatting. If everything checks out, the file is imported and then the program will compare the gathered version data against the baseline file. If there is a problem with importing the file at any point, there will be an error message and that will be the end of that iteration of the script. The program compares the current version of the application against the baseline file, and then makes a decision as to what to assign the application object's status. After the status of each application has been defined the program will output the array of application objects. The process is repeated for each computer name given.</li>
+</ul>
+<h4>Parameters</h4>
+<ul>
+<li><strong>BaseLinePath</strong> (Optional): A string of the file path to location of desired base line file.</li>
+</ul>
+<ul>
+<li><strong>ShowIgnored</strong> (Optional): Boolean that determines whether or not the user wishes to view all ignored applications in the console.</li>
+</ul>
+<ul>
+<li><strong>ComputerNames</strong> (Optional): A string array that specifies the other computers that the script will run on.</li>
+</ul>
+<h4>Outputs</h4>
+<ul>
+<li>A table containing the columns ComputerName, Name, Version, and Status.</li>
+</ul>
+<h4>Examples</h4>
+<ul>
+<li>Execute VersionData without a baseline file, just to see what is installed on local computer<br /><span class="code">Get-VersionData</span></li>
+</ul>
+<ul>
+<li>Execute VersionData with a baseline file, to compare local applications and show any applications that were deemed bloatware<br /><span class="code">Get-VersionData -BaseLinePath "C:/User/Desktop/baseLine.csv" -ShowIgnored true</span></li>
+</ul>
+<ul>
+<li>Execute VersionData to run with multiple computer names<br /><span class="code">Get-VersionData -ComputerNames "CMH1097743, HVM1141800"</span></li>
+</ul>
+
+<h1><a id="HTML_CSS_JavaScript"></a>HTML / CSS / JavaScript</h1>
+
+<h2>Index.html</h2>
+<p>This is the home page for the web interface. It contains the list of reports and links to the short and full views for each one. The HTML file itself only defines a table and loads reports.js and listReports.js.</p>
+
+<h2>Report.html</h2>
+<p>This is the page that displays either the short view or the full view. It defines a div for each type of data in a report and loads in displayReport.js. This should be opened like: report.html?short=true&id=20190410T151752. Information about the parameters can be seen <a href="#displayReport">here</a>.</p>
+
+<h2>Newtooltip.css</h2>
+<p>This is a styling sheet that will allow the administrator to change the look and feel of the web browser rendering of the reports. Here is where the administrator would change the size of the text, select a different color for the highlight and size of the tables, and even add more details to a already pre-existing class or HTML elements.</p>
+
+<h2><a id="displayReport"></a>displayReport.js</h2>
+<p>This script reads the short and id parameters from the url. The id is the report to display (report should be stored in reports\id.js). If the id parameter is missing or invalid, no report will be displayed. The short parameter is whether to display the report in the short or full view. If short has a value of true, the short view will be displayed. If short is any other value or missing, the full view will be displayed. To display a report, this script loads id.js and either <a href="#shortView">shortView.js</a> or <a href="#fullView">fullView.js</a>.</p>
+
+<h2><a id="fullView"></a>fullView.js</h2>
+<p>This script is the same as shortView.js, except all of the information is shown and not filtered. For more information, look at the <a href="#shortView">shortView.js</a> description.</p>
+
+<h2>listReports.js</h2>
+<p>This script reads the reports variable from reports.js, and add links for each report. The url for each link is report.html?short=(true|false)&id=report_id.</p>
+
+<h2>reports.js</h2>
+<p>This contains the list of reports on the computer. It simply defines an array of strings where each string is an id for a report. The id for each report is the file name without the file extension (.js). This array is then accessed by listReports.js to display the list of reports. Each id is kept on a seperate line, and the file is appended each time a new report is generated. Whenever a report is deleted, it should be deleted from this file as well, or it will still appear on index.html.</p>
+
+<h2><a id="shortView"></a>shortView.js</h2>
+<h4>Description</h4>
+<ul>
+<li>This script reads the data loaded into the web page and displays it in tables with red highlights and filtering. From the web page, it loads the following: reportTime, comment, versionData, driveData, ipData, osData, memoryData, timeData, and servicesData. After loading this data, it applies a function to the data that adds the data to the DOM.</li>
+</ul>
+<h4>Functions</h4>
+<ul>
+<li><strong>addReportTime(data, id)</strong>: Adds the time the report was generated, "data", into the DOM element "id".</li>
+<li><strong>addReportComments(data, id)</strong>: Adds the comment in the report, "data", into the DOM element "id".</li>
+<li><strong>addElement(data, id, heading, func)</strong>: Function to be run when the document is loaded. It adds the given "data" into the specified DOM element "id". A header "heading" is also added to the DOM element. There is a tooltip that changes based on each id. The "func" defines the function that will generate the table and what kind of filtering/highlighting will be applied.</li>
+<li><strong>versionHighlight(data, keys)</strong>: Generates an array of rows to be added to the DOM for the application version data. If the status is not "OK", then it will give the row the red-highlight class.</li>
+<li><strong>driveHighlight(data, keys)</strong>: Generates an array of rows to be added to the DOM for the drive data. If the FreeGB is less than 5, then the function will give the row the red-highlight class. If the FreeGB is not less than 5, it will not be added to the row array.</li>
+<li><strong>memoryHighlight(data, keys)</strong>: Generates an array of rows to be added to the DOM for the memory data. If the PctFree is less than 5, then it the function will give the row the red-highlight class. If the PctFree is not less than 5, it will not be added to the row array.</li>
+<li><strong>timeHighlight(data, keys)</strong>: Generates an array of rows to be added to the DOM for the time data. The row will get the red-highlight class if the StandardTimeZone doesn't match, if the DaylightTimeZone doesn't match, or if the time difference is more than 2 minutes. Else, the row will not be added to the row array.</li>
+<li><strong>servicesHighlight(data, keys)</strong>: Generates an array of rows to be added to the DOM for the services data. The row will get the red-highlight class if the StartMode is Auto, the State is Stopped, and the Ignore value is false. Else, the row will not be added to the row array.</li>
+<li><strong>noHighlight(data, keys)</strong>: Returns an array of rows with all of the table data and keys. This does not apply any highlighting to the rows.</li>
+<li><strong>CreateRow(data, keys)</strong>: Creates a table row element and fills it with the row's data. Returns the DOM element of the table row.</li>
+<li><strong>getVersion()</strong>: JS function to call the Element ID "version-data" in the HTML file in order to display and hide the current section.</li>
+<li><strong>getDrive()</strong>: JS function to call the Element ID "drive-data" in the HTML file in order to display and hide the current section.</li>
+<li><strong>getIP()</strong>: JS function to call the Element ID "ip-data" in the HTML file in order to display and hide the current section.</li>
+<li><strong>getOS()</strong>: JS function to call the Element ID "os-data" in the HTML file in order to display and hide the current section.</li>
+<li><strong>getMemory()</strong>: JS function to call the Element ID "memory-data" in the HTML file in order to display and hide the current section.</li>
+<li><strong>getTimes()</strong>: JS function to call the Element ID "time-data" in the HTML file in order to display and hide the current section.</li>
+<li><strong>getServices()</strong>: JS function to call the Element ID "services-data" in the HTML file in order to display and hide the current section.</li>
+</ul>
+
+
+<h1 style="text-align: left;"><a id="Java"></a>Java</h1>
+<h2>AdminTool.java</h2>
+<p>Contains all functionality for interacting with external files and PowerShell scripts.</p>
+<h3>Static Fields</h3>
+<ul>
+<li><strong>scriptPath</strong>: The relative path to the main powershell.</li>
+<li><strong>reportsPath</strong>: The relative path to the reports folder.</li>
+<li><strong>webPath</strong>: The relative path to report.html.</li>
+<li><strong>userGuide</strong>: The relative path to the user guide HTML document.</li>
+<li><strong>developerGuide</strong>: The relative path to the developer guide HTML document.</li>
+<li><strong>reportList</strong>: The relative path to reports.js.</li>
+<li><strong>computerList</strong>: The relative path to the list of remote computers to gather information from.</li>
+<li><strong>appVersions</strong>: The relative path to the application version baseline file.</li>
+<li><strong>serviceFilter</strong>: The relative path to the service filter.</li>
+<li><strong>input</strong>: Date formatter for parsing the ids of reports.</li>
+<li><strong>output</strong>: Date formatter for outputting the time a report was generated.</li>
+</ul>
+<h3>Methods</h3>
+<ul>
+<li><strong>openUserGuide</strong>: Reads the text from the user guide located at userGuide.</li>
+<li><strong>loadDeveloperGuide</strong>: Reads the text from the user guide located at developerGuide.</li>
+<li><strong>generateReport</strong>: Generates a new report by calling Main.ps1 (located at scriptPath) on a new thread. Only one report can be generated at a time. This immediately returns after starting a the new thread. Call cancelReport to stop the report generation.</li>
+<ul>
+<li><strong>Parameters</strong></li>
+<li><strong>comment</strong>: The comment for the report, cannot be null.</li>
+<li><strong>onDone</strong>: Callback for when the report generation is finished. Will be called on the dispatch thread.</li>
+</ul>
+<li><strong>cancelReport</strong>: Stops current report generation. If no report is being generated, no action is taken.</li>
+<li><strong>onReportChanged</strong>: Creates a new thread that watches the reports folder located at reportsPath. If any changes are made, the callback will be called on the dispatch thread.</li>
+<ul>
+<li><strong>Parameters</strong></li>
+<li><strong>onChanged</strong>: Callback for when a file is changed. Will be called on the dispatch thread.</li>
+</ul>
+<li><strong>deleteReports</strong>: Deletes a list of reports in the reports folder located at reportsPath. The reports are also deleted from reports.js (located at reportsList).</li>
+<ul>
+<li><strong>Parameters</strong></li>
+<li><strong>reports</strong>: List of ids of reports to delete.</li>
+</ul>
+<li><strong>openReport</strong>: Opens a report in the users default web browser. Internally, it creates a temporary file that immediately redirects the user to report.html. This is because html cannot be opened with parameters.</li>
+<ul>
+<li><strong>Parameters</strong></li>
+<li><strong>id</strong>: The id of the report to open.</li>
+<li><strong>viewShort</strong>: Whether the report should be opened in the short or full view.</li>
+</ul>
+<li><strong>getReportList</strong>: Gets a list of ids of reports in the reports folder located at reportsPath.</li>
+<li><strong>getComment</strong>: Gets the comment of a specific report. Returns the comment, or an empty string if the comment is not found. Note: the comment could also be an empty string.</li>
+<ul>
+<li><strong>Parameters</strong></li>
+<li><strong>id</strong>: The id of the report to get the comment from</li>
+</ul>
+<li><strong>getTableData</strong>: Gets the data for the table in the MainWindow. This calls getReportList, and getComment for each report. Returns an array of string arrays each filled with: the report id, time generated, and comment.</li>
+<li><strong>reportWritable</strong>: Opposite of reportWritable</li>
+<li><strong>writeComment</strong>: Edits the comment for a report. If no comment exists in the report, a new comment will be added.</li>
+<ul>
+<li><strong>Parameters</strong></li>
+<li><strong>id</strong>: The id of the report to edit.</li>
+<li><strong>comment</strong>: The new comment for the report</li>
+</ul>
+<li><strong>getComputerList</strong>: Gets the list of computers from the computer list file located at computerList. Returns an array of string arrays each with a computer name. A String[][] is returned for simplicity because the BaselineEditor uses tables instead of lists.</li>
+<li><strong>getAppVersionData</strong>: Gets the expected application names and versions from the baseline file located at appVersions. Returns an array of string arrays each with an application name and version.</li>
+<li><strong>getIgnoredServices</strong>: Gets the list of ignored services from the service filter list file located serviceFilter. Returns an array of string arrays each with a server name. A String[][] is returned for simplicity because the BaselineEditor uses tables instead of lists.</li>
+<li><strong>writeComputerList</strong>: Writes a list of computers to the computer list file located at computerList.</li>
+<ul>
+<li><strong>Parameters</strong></li>
+<li><strong>list</strong>: The list of computer names. This is a Vector&lt;Vector&lt;String&gt;&gt; because it is intended to take the data from DefaultTableModel.getDataVector().</li>
+</ul>
+<li><strong>writeAppVersionData</strong>: Writes a list of expected application names and versions to the baseline file located at appVersions.</li>
+<ul>
+<li><strong>Parameters</strong></li>
+<li><strong>list</strong>: The list of computer names. This is a Vector&lt;Vector&lt;String&gt;&gt; because it is intended to take the data from DefaultTableModel.getDataVector().</li>
+</ul>
+<li><strong>writeServiceFilter</strong>: Writes a list of ignored services to the service filter list file located serviceFilter.</li>
+<ul>
+<li><strong>Parameters</strong></li>
+<li><strong>list</strong>: The list of computer names. This is a Vector&lt;Vector&lt;String&gt;&gt; because it is intended to take the data from DefaultTableModel.getDataVector().</li>
+</ul>
+</ul>
+
+<h2>BaselineEditor.java</h2>
+<h3>Constructors</h3>
+<p>This file is the window that allows the user to edit the computer list, application baseline, and service filter. It keeps track of if the user has made changes and warns the user if those changes aren't saved when they close the window.</p>
+<ul>
+<li><strong>BaselineEditor</strong>: Constructs the window, takes no parameters. editor.setVisible(true) need to be called after to display the window.</li>
+</ul>
+<h3>Methods</h3>
+<ul>
+<li><strong>initData</strong>: Reads the computer list, application baseline, and service filter from the file system using the  AdminTool class. It then fills each of the tables with the data from each of the files.</li>
+<li><strong>addRow1</strong>: Gets a string value from the user and adds it to a table. Used to add new entries for the computer list and service filter.</li>
+<ul>
+<li><strong>Parameters</strong></li>
+<li><strong>table</strong>: The table to add the row to.</li>
+<li><strong>inputName</strong>: The name of the input ("Computer Name", "Service Name").</li>
+</ul>
+<li><strong>editRow1</strong>: Gets the selected entry in a table, allows the user to edit it, and replaces the old value with the edited one. Used to edit entries in the computer list and service filter.</li>
+<ul>
+<li><strong>Parameters</strong></li>
+<li><strong>table</strong>: The table to edit the selected row in</li>
+<li><strong>inputName</strong>: The name of the input ("Computer Name", "Service Name")</li>
+</ul>
+<li><strong>removeSelectedRows</strong>: Removes the selected rows from a table.</li>
+<li><strong>addRow2</strong>: Gets 2 string values from the user and adds them as a row to a table. Used to add new entries for the application baseline.</li>
+<ul>
+<li><strong>Parameters</strong></li>
+<li><strong>table</strong>: The table to add the row to.</li>
+<li><strong>inputName1</strong>: The name for the first input ("Application Name").</li>
+<li><strong>inputName2</strong>: The name for the second input ("Application Version").</li>
+</ul>
+<li><strong>editRow2</strong>: Gets the selected row in a table, allows the user to edit the two values in it, and replaces the old values with the edited ones. Used to edit entries in the application baseline.</li>
+<ul>
+<li><strong>Parameters</strong></li>
+<li><strong>table</strong>: The table to edit the selected row in.</li>
+<li><strong>inputName1</strong>: The name for the first input ("Application Name").</li>
+<li><strong>inputName2</strong>: The name for the second input ("Application Version").</li>
+</ul>
+<li><strong>editData</strong>: Called whenever some data has been edited. This signals that the data needs to be saved by changing the title of the JFrame and enabling the save button.</li>
+<li><strong>saveData</strong>: Called whenever the user saves the data. This writes to the computer list, application baseline, and service filter files using the AdminTool class. It also resets the title of the JFrame and disables the save button.</li>
+<li><strong>cancelClose</strong>: This allows the user to cancel closing the window if they are about lose unsaved changes. Returns true if the user does decide to cancel closing, false if no data needs to be saved or the user doesn’t cancel closing the window.</li>
+</ul>
+<h4>Method 1</h4>
+
+<h2>MainWindow.java</h2>
+<ul>
+<li>This file is for the first window with the table filled with reports. This is where the main method is located. The window has a menu bar with File, and Help menus. File contains "Edit Baseline Files", "Generate Report", and "Exit". "Edit Baseline Files" opens the baseline editor which is described in BaselineEditor.java. "Generate Report" generates a new report by calling Main.ps1 and opening a popup described in ReportPopupMenu.java. Help contains "User Guide" and "Developer Guide" which let the user view the guides written to help users and developers.</li>
+</ul>
+<h3>Constructors</h3>
+<ul>
+<li><strong>MainWindow</strong>: Constructs the window, takes no parameters. window.setVisible(true) still needs to be called after to display the window.</li>
+</ul>
+<h3>Methods</h3>
+<ul>
+<li><strong>main</strong>: The main method that runs the program.</li>
+</ul>
+<h3>Static Fields</h3>
+<ul>
+<li><strong>primaryFont</strong>: The font used for menu titles, table headers, table entries, and tab titles.</li>
+<li><strong>secondaryFont</strong>: The font used for menu items, buttons, and labels.</li>
+</ul>
+
+<h2>ReportPopupMenu.java</h2>
+<p>This file is for the popup menu that appears when a user right clicks on a report. The menu has 3 buttons: "Open Short View", "Open Full View", and "Edit Comment". If the user doesn't have permission to edit the report file, "Edit Comment" will be disabled. This takes in the new comment when the user clicks "Edit Comment" and passes it to the callback given in the constructor.</p>
+<h3>Constructors</h3>
+<ul>
+<li><strong>ReportPopupMenu</strong>: Constructs the popup. popup.show(invoker, x, y) needs to be called after to display the popup.</li>
+<ul>
+<li><strong>blockEdit</strong>: True if the user doesn't have permission edit the report file.</li>
+<li><strong>comment</strong>: The current comment for the report that was right clicked.</li>
+<li><strong>onClick</strong>: Will be called with a value of true when the user clicks "Open Short View" or with a value of false when the user clicks "Open Full View".</li>
+<li><strong>onEditComment</strong>: Will be called with the new comment if the user clicks "Edit Comment" and enters a comment that is different from the old comment.</li>
+</ul>
+</ul>
+
+<h2>RunningPopup.java</h2>
+<p>This file is for the window that appears when a report is being generated. It uses a gif file located in the jar file at /res/loading.gif for the spinning wheel. This window is a modal JDialog, so the user cannot do anything in the main window.</p>
+<h3>Constructors</h3>
+<ul>
+<li><strong>RunningPopup</strong>: Constructs the popup. popup.setVisible needs to be called after this to display the popup.</li>
+<ul>
+<li><strong>Parameters</strong></li>
+<li><strong>message</strong>: The message to display on the popup.</li>
+<li><strong>owner</strong>: The JFrame that is the owner for the popup.</li>
+<li><strong>onCancel</strong>: Will be called if the user cancels the report generation.</li>
+</ul>
+</ul>
+</body>
+
+</html>

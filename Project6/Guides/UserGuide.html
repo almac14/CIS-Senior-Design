@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<style type="text/css">
+h3, h4, h4, p { 
+	margin-left: 40px;
+}
+</style>
+</head>
+
+<body>
+<p></p>
+<h1 style="text-align: center;">User Guide</h1>
+<table cellpadding="10" align="center">
+<tbody>
+<tr>
+<td><a href="#Installation">Installation</a></td>
+<td><a href="#Running_the_Tool">Running the Tool</a></td>
+<td><a href="#Interpretation">Report Interpretation</a></td>
+<td><a href="#Delete_Edit">Delete Reports / Edit Comments</a></td>
+<td><a href="#Edit_Baseline">Edit Baseline Files</a></td>
+</tr>
+</tbody>
+</table>
+
+<h1><a id="Installation"></a>Installation</h1>
+<ol>
+<li>Copy the Project6 folder to the directory you would like to have the tool installed.</li>
+<li>Build Java Admin Tool in Eclipse</li>
+<ol type="a">
+<li>Open Eclipse workspace located at Project6/EclipseProjects</li>
+<li>Right click on AdminTool, Click Export, Select Runnable Jar under Java, Click Next</li>
+<li>Select MainWindow - AdminTool for the launch configuration</li>
+<li>Select the Projec6 folder on your machine for the export destination</li>
+<li>Click Finish</li>
+<li>Disregard any warnings</li>
+</ol>
+</ol>
+
+<h1><a id="Running_the_Tool"></a>Running the Tool</h1>
+<ol>
+<li>Make sure that the tool has been properly installed by using the installation guide</li>
+<li>Make sure that the .jar file is in the Project6 folder</li>
+<li>Create a shortcut to the .jar file by right-clicking and selecting Create Shortcut. This shortcut can be placed anywhere that is needed.</li>
+<li>Edit the properties of the shortcut by right-clicking the shortcut and selecting Properties</li>
+<ol type="a">
+<li>Under the Shortcut tab, change the Target field to match the following format:<br />"Path to Java JRE executable" -jar "Path to .jar file"<br />Ex. "C:\Program Files\Java\jdk1.8.0_201\bin\java.exe" -jar AdminTool.jar</li>
+<li>Under the Shortcut tab, choose Advanced... and check the "Run as Administrator" box</li>
+</ol>
+<li>Use the newly created shortcut to run the tool</li>
+</ol>
+
+<h1><a id="Interpretation"></a>Report Interpretation</h1>
+<ol>
+<li>From the administrator UI:</li>
+<ol type="a">
+<li>Click the 'File' widget at the top-left</li>
+<li>Click 'Generate Report'</li>
+<li>You will be prompted to add a comment to the report. Enter anything you want attached to that report (can be edited later)</li>
+<li>Once the report has been generated, right-click on the desired report's row</li>
+<li>Select 'Full View' or 'Short View' to open the report in your computer's default web browser</li>
+<li>Manually allow the page to load on your web browser if prompted to do so</li>
+</ol>
+<li>NOTE: You may not have to do this depending on your web browser's security settings (modify those settings to always allow this web page to load on your web browser)</li>
+</ol>
+
+<h3><strong>Header Information</strong></h3>
+<p>At the top of each report you'll find information on when the report was generated, as well as a drop-down table to select which type of report you wish to view. Comments are also mentioned here if any where provided during the generation of the report.</p>
+
+<p>*Each section has a Why the Red Highlighting? line above the table. If you move your cursor over the line, it will tell you why there might be errors among entries in the section in question. There is also a Toggle widget that, when clicked, will collapse or expand the table it correlates to.</p>
+
+<h3><strong>Applications</strong></h3>
+<p>The first section of the report provides a table regarding the installed applications on the given system(s). Each application on your system(s) is displayed by Name, Version, and Status of the application in question. The name is simply the name that appears on the application's entry in the computer's uninstall list. The Version is the application's current version number. And the Status refers to the application's consistency with the provided baseline file. Statuses consist of "OK" (no problems), "Out-Of-Date" (application on your system is behind the baseline file), "Ahead" (application on your system is ahead of the baseline file), and "DNE" (Does Not Exist: application found on your system does not exist on the provided baseline file). If no baseline was provided, this column will be empty (filled with " - ").</p>
+
+<h3><strong>Drive Space</strong></h3>
+<p>The Drive Space section displays the used/available space on each drive on each computer. This information is displayed in both Gigabytes used/available and percent free.</p>
+
+<h3><strong>IP Addresses</strong></h3>
+<p>The IP Addresses section simply displays the IP Address of the computer in question (either remote or local).</p>
+
+<h3><strong>OS Version</strong></h3>
+<p>The OS Version displays the Operating System version number of the computer in question.</p>
+
+<h3><strong>Memory Usage</strong></h3>
+<p>The Memory Usage section references how much RAM (Random Access Memory) is being utilized. The tool gathers information on how much memory is free (both in terms of Gigabytes and percent free) and the total memory.</p>
+
+<h3><strong>Server Time</strong></h3>
+<p>The Server Time section refers to what time the server was on during the generation of the report, as well as the date and the time zone the server was in.  Time information is reported in both standard time and Unix time.</p>
+
+<h3><strong>Server Services</strong></h3>
+<p>The final section refers to the current running services on the machine(s) during the generation of the report. The name of each computer scanned is in the first column (as per usual). The name of each process found on that computer is displayed in the second column. The state of the process is displayed in the third column (referring to whether the program was running or stopped). After that, we see the start mode of that process which could either be Auto-start or Manual. If the start mode of the process is Auto-start and the process is currently not running, then it will be flagged as an error. To eliminate any false-positives, you can edit the Services baseline file to ignore any processes that are flagged frequently that aren't causing any problems. Whether or not the process is in the baseline file is displayed in the last column (Ignored).</p>
+
+
+<h1><a id="Delete_Edit"></a>Delete Reports / Edit Comments</h1>
+<ol>
+<li>Make sure to correctly install the tool by referencing the Installation Guide.</li>
+<li>Make sure the .jar file has been installed to the Project6 folder.</li>
+<li>Double click the shortcut created in <a href="#Running_the_Tool">Running the Tool</a> and the admin tool will begin to run, displaying the GUI on screen. From here you will be able to see a list of previous reports.</li>
+<ol type="a">
+<li>You can right-click on any report and 3 options will pop up, one being to edit the comment on that specific report. </li>
+<li>After clicking edit comment and input box will pop up and now you can edit that comment or if one was not entered you can enter one.</li>
+</ol>
+<li>On the top left of the GUI there is a "File" button. Click on this and select "Generate Report"</li>
+<ol type="a">
+<li>An input box will pop up prompting you to enter a comment for this newly generated report. </li>
+<li>You may leave this blank or enter something and edit it later. </li>
+</ol>
+<li>To delete a report all you must do is make sure the selected report is highlighted and click the designated delete key on your keyboard.</li>
+</ol>
+
+<h1><a id="Edit_Baseline"></a>Edit Baseline Files</h1>
+<ul>
+<li>The baseline files are used by the admin tool to filter out any potential problematic areas that do not meet the requirements specified in the baseline file. Currently, it takes in three arguments</li>
+<ol type="a">
+<li><strong>Computer List</strong>: specifies which computers the program will be executed on in the network.</li>
+<li><strong>App Versions</strong>: will specify the minimum application version should be installed in the system.</li>
+<li><strong>Ignore Services</strong>: the services that are specified in this list will be ignored by the tool during execution time.</li>
+</ol>
+<li>To access the baseline editor in the Admin Tool:</li>
+<ol>
+<li>Open Admin Tool -> File -> Edit Baseline Files</li>
+<li>We will add a computer name to the Computer List as an example<br /><img src="BaselineNew.png" width="500"></li>
+<li>Click add button and a window prompting a new computer name will appear.</li>
+<li>Insert a computer name and it will be added to the list.<br /><img src="capture.jpg" width="500"></li>
+<li>To remove or to edit a computer name follow the same steps except select the desired option instead.</li>
+</ol>
+</ul>
+
+</body>
+
+</html>

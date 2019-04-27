@@ -1,0 +1,162 @@
+import java.awt.BorderLayout;
+import java.awt.Desktop;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.Font;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
+import javax.swing.plaf.FontUIResource;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.UIDefaults;
+import javax.swing.UIManager;
+import javax.swing.JMenuBar;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.IntStream;
+
+public class MainWindow extends JFrame {
+
+	public static final Font secondaryFont = new Font("sans", Font.PLAIN, 12);
+	public static final Font primaryFont = new Font("sans", Font.PLAIN, 14);
+	
+	private JPanel contentPane;
+	private JTable table;
+	
+	public static void main(String[] args) {
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+					
+					MainWindow frame = new MainWindow();
+					frame.setVisible(true);
+					frame.setLocationRelativeTo(null);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+
+	public MainWindow() {
+		setTitle("Project6 Admin Tool");
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setBounds(100, 100, 800, 600);
+		
+		JMenuBar menuBar = new JMenuBar();
+		setJMenuBar(menuBar);
+		
+		JMenu mnFile = new JMenu("File");
+		mnFile.setPreferredSize(new Dimension(30, primaryFont.getSize() + 5));
+		mnFile.setFont(primaryFont);
+		menuBar.add(mnFile);
+		
+		JMenuItem mntmEditBaselineFiles = new JMenuItem("Edit Baseline Files");
+		mntmEditBaselineFiles.setFont(secondaryFont);
+		mntmEditBaselineFiles.addActionListener(arg -> {
+			BaselineEditor editor = new BaselineEditor();
+			editor.setLocationRelativeTo(null);
+			editor.initData();
+			editor.setVisible(true);
+		});
+		mnFile.add(mntmEditBaselineFiles);
+		
+		DefaultTableModel model = new DefaultTableModel();
+		
+		JMenuItem mntmGenerateReport = new JMenuItem("Generate Report");
+		mntmGenerateReport.setFont(secondaryFont);
+		mntmGenerateReport.addActionListener(arg -> {
+			RunningPopup popup = new RunningPopup("Generating Report...", this, AdminTool::cancelReport);
+			popup.setLocationRelativeTo(null);
+			popup.setVisible(true);
+			AdminTool.generateReport(() -> {
+				model.setDataVector(AdminTool.getTableData(), new String[] { "ID", "Time", "Comment" });
+				popup.dispose();
+			});
+		});
+		mnFile.add(mntmGenerateReport);
+
+		JMenuItem mntmExit = new JMenuItem("Exit");
+		mntmExit.setFont(secondaryFont);
+		mntmExit.addActionListener(arg -> System.exit(0));
+		mnFile.add(mntmExit);
+		contentPane = new JPanel();
+		setContentPane(contentPane);
+		contentPane.setLayout(new BorderLayout(0, 0));
+		
+		JScrollPane scrollPane = new JScrollPane();
+		contentPane.add(scrollPane);
+		
+		model.setDataVector(AdminTool.getTableData(), new String[] { "ID", "Time", "Comment" });
+		table = new JTable(model) {
+			@Override
+			public boolean isCellEditable(int row, int col) {
+				return false;
+			}
+		};
+		table.getTableHeader().setFont(primaryFont);
+		table.setFont(primaryFont);
+		table.setRowHeight(primaryFont.getSize() + 5);
+		table.getTableHeader().setReorderingAllowed(false);
+		table.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getButton() == 3) {
+					int row = table.rowAtPoint(e.getPoint());
+
+					table.clearSelection();
+					table.addRowSelectionInterval(row,row);
+				}
+				if (e.getButton() == 1 && e.getClickCount() == 2) {
+					AdminTool.openReport((String)model.getValueAt(table.getSelectedRow(), 0), true);
+				} 
+				else if (e.getButton() == 3 && e.getClickCount() == 1) {
+					String currentComment = (String)model.getValueAt(table.getSelectedRow(), 2);
+					
+					ReportPopupMenu menu = new ReportPopupMenu(currentComment, viewShort -> {
+						AdminTool.openReport((String)model.getValueAt(table.getSelectedRow(), 0), viewShort);
+					}, newComment -> {
+						model.setValueAt(newComment, table.getSelectedRow(), 2);
+						AdminTool.writeComment((String)model.getValueAt(table.getSelectedRow(), 0), newComment);
+					});
+					menu.show(e.getComponent(), e.getX(), e.getY());
+				}
+			}
+		});
+		table.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_DELETE) {
+					int[] rows = table.getSelectedRows();
+					if (JOptionPane.showConfirmDialog(table, "Delete " + rows.length + " reports?") != 0)
+						return;
+					List<String> reportList = new ArrayList<>();
+					for (int i = rows.length - 1; i >= 0; i--) {
+						int row = rows[i];
+						reportList.add((String)model.getValueAt(row, 0));
+						model.removeRow(row);
+					}
+					AdminTool.deleteReports(reportList);
+				}
+			}
+		});
+		
+		table.setFillsViewportHeight(true);
+		scrollPane.setViewportView(table);
+	}
+
+}

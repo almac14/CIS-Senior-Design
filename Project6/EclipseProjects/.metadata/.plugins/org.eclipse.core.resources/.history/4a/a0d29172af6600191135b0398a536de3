@@ -1,0 +1,215 @@
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.Font;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.UIManager;
+import javax.swing.JMenuBar;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@SuppressWarnings("serial")
+public class MainWindow extends JFrame {
+
+	public static final Font secondaryFont = new Font("sans", Font.PLAIN, 22);
+	public static final Font primaryFont = new Font("sans", Font.PLAIN, 24);
+	
+	private JPanel contentPane;
+	private JTable table;
+	
+	private boolean reloadReports;
+	
+	public static void main(String[] args) {
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+					UIManager.put("Menu.font", primaryFont);
+					UIManager.put("TableHeader.font", primaryFont);
+					UIManager.put("Table.font", primaryFont);
+					UIManager.put("TabbedPane.font", primaryFont);
+					UIManager.put("MenuItem.font", secondaryFont);
+					UIManager.put("Button.font", secondaryFont);
+					UIManager.put("Label.font", secondaryFont);
+					
+					MainWindow frame = new MainWindow();
+					frame.setVisible(true);
+					frame.setLocationRelativeTo(null);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+
+	public MainWindow() {
+		setTitle("Project6 Admin Tool");
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setBounds(100, 100, 800, 600);
+		
+		JMenuBar menuBar = new JMenuBar();
+		setJMenuBar(menuBar);
+		
+		JMenu mnFile = new JMenu("File");
+		menuBar.add(mnFile);
+		
+		JMenuItem mntmEditBaselineFiles = new JMenuItem("Edit Baseline Files");
+		mntmEditBaselineFiles.addActionListener(arg -> {
+			BaselineEditor editor = new BaselineEditor();
+			editor.setLocationRelativeTo(null);
+			editor.setVisible(true);
+		});
+		mnFile.add(mntmEditBaselineFiles);
+		
+		DefaultTableModel model = new DefaultTableModel();
+		
+		JMenuItem mntmGenerateReport = new JMenuItem("Generate Report");
+		mntmGenerateReport.addActionListener(arg -> {
+			String comment = JOptionPane.showInputDialog("Enter comment:");
+			if (comment == null)
+				return;
+
+			RunningPopup popup = new RunningPopup("Generating Report...", this, AdminTool::cancelReport);
+			popup.setLocationRelativeTo(null);
+			AdminTool.generateReport(comment, () -> popup.dispose());
+			popup.setVisible(true);
+		});
+		mnFile.add(mntmGenerateReport);
+
+		JMenuItem mntmExit = new JMenuItem("Exit");
+		mntmExit.addActionListener(arg -> System.exit(0));
+		mnFile.add(mntmExit);
+		
+		JMenu mnHelp = new JMenu("Help");
+		menuBar.add(mnHelp);
+		
+		JMenuItem mntmUserGuide = new JMenuItem("User Guide");
+		mnHelp.add(mntmUserGuide);
+		mntmUserGuide.addActionListener(arg -> {
+			HTMLWindow window = new HTMLWindow(AdminTool.loadUserGuide(), "User Guide");
+			window.setLocationRelativeTo(null);
+			window.setVisible(true);
+		});
+		
+		JMenuItem mntmDeveloperGuide = new JMenuItem("Developer Guide");
+		mnHelp.add(mntmDeveloperGuide);
+		mntmDeveloperGuide.addActionListener(arg -> {
+			HTMLWindow window = new HTMLWindow(AdminTool.loadDeveloperGuide(), "Developer Guide");
+			window.setLocationRelativeTo(null);
+			window.setVisible(true);
+		});
+		
+		contentPane = new JPanel();
+		setContentPane(contentPane);
+		contentPane.setLayout(new BorderLayout(0, 0));
+		
+		JScrollPane scrollPane = new JScrollPane();
+		contentPane.add(scrollPane);
+		
+		model.setDataVector(AdminTool.getTableData(), new String[] { "ID", "Time", "Comment" });
+		table = new JTable(model) {
+			@Override
+			public boolean isCellEditable(int row, int col) {
+				return false;
+			}
+		};
+		table.setRowHeight(primaryFont.getSize() + 5);
+		table.getTableHeader().setReorderingAllowed(false);
+		table.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getButton() == 3) {
+					int row = table.rowAtPoint(e.getPoint());
+
+					table.clearSelection();
+					table.addRowSelectionInterval(row,row);
+				}
+				if (e.getButton() == 1 && e.getClickCount() == 2) {
+					AdminTool.openReport((String)model.getValueAt(table.getSelectedRow(), 0), true);
+				} 
+				else if (e.getButton() == 3 && e.getClickCount() == 1) {
+					String currentComment = (String)model.getValueAt(table.getSelectedRow(), 2);
+					boolean blockEdit = AdminTool.reportNotWritable((String)model.getValueAt(table.getSelectedRow(), 0));
+					
+					ReportPopupMenu menu = new ReportPopupMenu(blockEdit, currentComment, viewShort -> {
+						AdminTool.openReport((String)model.getValueAt(table.getSelectedRow(), 0), viewShort);
+					}, newComment -> {
+						model.setValueAt(newComment, table.getSelectedRow(), 2);
+						AdminTool.writeComment((String)model.getValueAt(table.getSelectedRow(), 0), newComment);
+					});
+					menu.show(e.getComponent(), e.getX(), e.getY());
+				}
+			}
+		});
+		table.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_DELETE) {
+					int[] rows = table.getSelectedRows();
+					if (JOptionPane.showConfirmDialog(null, "Delete " + rows.length + " reports?") != 0)
+						return;
+					List<String> reportList = new ArrayList<>();
+					for (int row : rows)
+						reportList.add((String)model.getValueAt(row, 0));
+					
+					List<String> cannotDelete = reportList.stream().filter(AdminTool::reportNotWritable).collect(Collectors.toList());
+					if (cannotDelete.isEmpty()) {
+						AdminTool.deleteReports(reportList);
+						for (int i = rows.length - 1; i >= 0; i--)
+							model.removeRow(rows[i]);
+						return;
+					}
+					String cannotString = String.join(",", cannotDelete);
+					List<String> canDelete = reportList.stream().filter(AdminTool::reportWritable).collect(Collectors.toList());
+					if (canDelete.isEmpty()) {
+						JOptionPane.showMessageDialog(null, "Cannot delete reports: " + cannotString);
+						return;
+					}
+					String canString = String.join(",", canDelete);
+					String message = "Cannot delete reports: " + cannotString + ".\nWould you like to delete the others (" + canString + ")?";
+					if (JOptionPane.showConfirmDialog(null, message) != 0)
+						return;
+					AdminTool.deleteReports(canDelete);
+					for (int i = rows.length - 1; i >= 0; i--) {
+						if (canDelete.contains(reportList.get(i)))
+							model.removeRow(rows[i]);
+						System.out.println("Removing: " + rows[i] + ", " + reportList.get(i));
+					}
+				}
+			}
+		});
+		
+		table.setFillsViewportHeight(true);
+		scrollPane.setViewportView(table);
+		
+		AdminTool.createWatchThread(() -> reloadReports = true);
+		table.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusGained(FocusEvent e) {
+				if (reloadReports) {
+					table.setEnabled(false);
+					model.setDataVector(AdminTool.getTableData(), new String[] { "ID", "Time", "Comment" });
+					table.setEnabled(true);
+					reloadReports = false;
+				}
+			}
+		});
+	}
+
+}

@@ -1,0 +1,62 @@
+import java.awt.BorderLayout;
+
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JLabel;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
+import javax.swing.BoxLayout;
+import java.awt.Component;
+import java.awt.Image;
+
+import javax.swing.border.EmptyBorder;
+import javax.swing.JButton;
+import javax.swing.ImageIcon;
+
+public class RunningPopup extends JDialog {
+
+	/**
+	 * Constructs the popup. setVisable(true) needs to be called to display the popup.
+	 * @param message The message to display on the popup
+	 * @param owner The owner of the dialog
+	 * @param onCancel Will be called if the user cancels the report generation
+	 */
+	public RunningPopup(String message, JFrame owner, Runnable onCancel) {
+		super(owner, true);
+		setResizable(false);
+		setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+		getContentPane().setLayout(new BorderLayout(0, 0));
+		
+		JPanel panel = new JPanel();
+		panel.setBorder(new EmptyBorder(15, 20, 10, 20));
+		getContentPane().add(panel);
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		
+		JLabel messageLabel = new JLabel(message);
+		messageLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+		panel.add(messageLabel);
+		
+		JLabel lblImage = new JLabel("");
+		lblImage.setAlignmentX(Component.CENTER_ALIGNMENT);
+		ImageIcon icon = new ImageIcon(RunningPopup.class.getResource("/res/loading.gif"));
+		lblImage.setIcon(new ImageIcon(icon.getImage().getScaledInstance(010, 50, Image.SCALE_DEFAULT)));
+		panel.add(lblImage);
+		
+		JButton btnCancel = new JButton("Cancel");
+		btnCancel.setAlignmentX(Component.CENTER_ALIGNMENT);
+		panel.add(btnCancel);
+
+		pack();
+		
+		btnCancel.addActionListener(e -> onCancel.run());
+		
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				onCancel.run();
+			}
+		});
+	}
+}

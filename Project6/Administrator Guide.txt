@@ -1,0 +1,20 @@
+Main executable is the shortcut to "Main"
+
+Files:
+"Baseline": This contains the baseline application names and versions that are expected
+"Computers": Leftover file
+"OtherServers": Contains the server list to run on (the tool automatically gets the host server's information, so it should not be included)
+	Note: currently, the tool only works on virtual machines of the host server
+"ServiceFilter": List of serverices to ignore from flagging
+
+"CompletedScript": Folder that contains all of the powershell scripts, including the main script
+
+"Data Sheet": Folder that contains the HTML views of the data sheets and the code that dynamically creates the HTML
+"index.html": The main HTML views for the data reports. Open this to see the generated reports
+"js": Folder that contains all of the javascript code
+"reports": Folder that contains all of the report information
+
+Notable Scripts:
+"FindOtherServers.ps1": Finds all other servers on the domain and adds them to the "OtherServers" file
+"ScheduleTask.ps1": Adds a task called "Server Health Check" to the task scheduler which will run the main program daily at 12:19 PM
+"DeleteTask.ps1": Deletes a task from the task scheduler from the passed-in TaskName parameter

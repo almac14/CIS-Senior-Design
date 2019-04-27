@@ -1,0 +1,30 @@
+import java.awt.BorderLayout;
+
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
+import java.awt.GridLayout;
+import javax.swing.JProgressBar;
+import javax.swing.BoxLayout;
+import java.awt.Component;
+
+public class RunningPopup extends JDialog {
+
+	public RunningPopup(String message, JFrame owner) {
+		super(owner);
+		setResizable(false);
+		setModal(true);
+		setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+		setBounds(100, 100, 200, 100);
+		getContentPane().setLayout(new BorderLayout(0, 0));
+		
+		JPanel panel = new JPanel();
+		getContentPane().add(panel, BorderLayout.CENTER);
+		panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
+		
+		JLabel messageabel = new JLabel(message);
+		panel.add(messageabel);
+	}
+}

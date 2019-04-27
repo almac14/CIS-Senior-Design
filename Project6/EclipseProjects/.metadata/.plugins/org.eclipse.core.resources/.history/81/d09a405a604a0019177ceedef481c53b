@@ -1,0 +1,45 @@
+import java.awt.BorderLayout;
+
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
+import java.awt.GridLayout;
+import javax.swing.JProgressBar;
+import javax.swing.BoxLayout;
+import java.awt.Component;
+import java.awt.GridBagLayout;
+import java.awt.GridBagConstraints;
+import java.awt.FlowLayout;
+import javax.swing.Box;
+import javax.swing.border.EmptyBorder;
+
+public class RunningPopup extends JDialog {
+
+	public RunningPopup(String message, JFrame owner) {
+		super(owner);
+		setResizable(false);
+		setModal(true);
+		setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+		setBounds(100, 100, 200, 100);
+		getContentPane().setLayout(new BorderLayout(0, 0));
+		
+		JPanel panel = new JPanel();
+		panel.setBorder(new EmptyBorder(15, 20, 0, 20));
+		getContentPane().add(panel);
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		
+		JLabel messageLabel = new JLabel(message);
+		messageLabel.setFont(MainWindow.secondaryFont);
+		messageLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+		panel.add(messageLabel);
+		
+		Component verticalStrut = Box.createVerticalStrut(10);
+		panel.add(verticalStrut);
+		
+		JProgressBar progressBar = new JProgressBar();
+		progressBar.setIndeterminate(true);
+		panel.add(progressBar);
+	}
+}

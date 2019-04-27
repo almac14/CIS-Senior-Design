@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<!-- Load CSS styles -->
+<link rel="stylesheet" href="Newtooltip.css">
+<!--link rel="stylesheet" href="bootstrap.css-->
+
+</head>
+<body>
+
+<h1>Server Status Report</h1>
+
+<!-- Add this section to report.html -->
+<form name="selectionform">
+
+<p><select name="linksel" onchange="OnSelChange()">
+    <option>-- select page --</option>
+    <option>List of Reports</option>
+    <option>Full View</option> 
+    <option>Short View</option>
+</select></p>
+</form>
+
+<script>
+	var params = {};
+
+	window.location.search.split(/[&?]+/).forEach(function(p) {
+		var a = p.split("=");
+		if (a.length == 2)
+			params[a[0]] = a[1];
+	});
+	var id = params["id"];
+	
+	
+    function OnSelChange()
+    {
+        if (id != undefined) {
+			i = document.selectionform.linksel.selectedIndex;
+			url = ['index.html', 'report.html?short=false&id='+id,
+				   'report.html?short=true&id='+id];
+			if( i > 0 ) window.location.href = url[i - 1];
+		}
+    }
+</script>
+
+<div id = "report-time"></div>
+
+<button onclick="topFunction()" id="myBtn" title="Go to top">Top of Page</button>
+
+<style>
+#myBtn {
+  display: none; /* Hidden by default */
+  position: fixed; /* Fixed/sticky position */
+  bottom: 20px; /* Place the button at the bottom of the page */
+  right: 30px; /* Place the button 30px from the right */
+  z-index: 99; /* Make sure it does not overlap */
+  border: none; /* Remove borders */
+  outline: none; /* Remove outline */
+  background-color: red; /* Set a background color */
+  color: white; /* Text color */
+  cursor: pointer; /* Add a mouse pointer on hover */
+  padding: 15px; /* Some padding */
+  border-radius: 10px; /* Rounded corners */
+  font-size: 18px; /* Increase font size */
+}
+
+#myBtn:hover {
+  background-color: #555; /* Add a dark-grey background on hover */
+}
+</style>
+
+<script>
+// When the user scrolls down 20px from the top of the document, show the button
+window.onscroll = function() {scrollFunction()};
+
+function scrollFunction() {
+  if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+    document.getElementById("myBtn").style.display = "block";
+  } else {
+    document.getElementById("myBtn").style.display = "none";
+  }
+}
+
+// When the user clicks on the button, scroll to the top of the document
+function topFunction() {
+  document.body.scrollTop = 0; // For Safari
+  document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
+}
+</script>
+
+<!-- Section ends here, Need to update the html links for short and full view as the ones that are generated do not work with "&id=" -->
+
+<!-- Button onclick is for toggling the view of each section -->
+
+<div id = "report-comments"></div>
+
+<button class="but" onclick="getVersion()">Toggle Application Version</button>
+<div id = "version-data"></div>
+
+<br />
+<button class="but" onclick="getDrive()">Toggle Drive Space</button>
+<div id = "drive-data"></div>
+
+<br />
+<button class="but" onclick="getIP()">Toggle IP Address</button>
+<div id = "ip-data"></div>
+
+<br />
+<button class="but" onclick="getOS()">Toggle OS Verson</button>
+<div id = "os-data"></div>
+
+<br />
+<button class="but" onclick="getMemory()">Toggle Memory Usage</button>
+<div id = "memory-data"></div>
+
+<br />
+<button class="but" onclick="getTimes()">Toggle Server Time</button>
+<div id = "time-data"></div>	
+
+<br />
+<button class="but" onclick="getServices()">Toggle Server Services</button>
+<div id = "services-data"></div>
+
+<!-- Load JS after loading page data -->
+<script src="js\displayReport.js"></script>
+
+</body>
+</html>
